@@ -25,6 +25,7 @@ Every button installs its CLI on first use and caches it forever after.
 | **Qwen** | `qwen` | 2,000 requests/day, no token limit, via a qwen.ai login. |
 | **Kimi** | `kimi` | Moonshot's Kimi K2.5, 256K context. |
 | **Codex** | `codex` | OpenAI's CLI, free on a ChatGPT account. |
+| **Cursor** | `cursor-agent` | Free Hobby plan, no card. Agent requests are limited. |
 
 > Google switched off the free Gemini CLI quota on 18 June 2026 and moved free, Pro and
 > Ultra users to **Antigravity CLI** (`agy`). That is what the Gemini button installs —
@@ -36,8 +37,19 @@ Every button installs its CLI on first use and caches it forever after.
 |---|---|---|
 | **Claude** | `claude` | Claude Pro / Max, or API credits |
 | **Grok** | `grok` | SuperGrok, or xAI API credits |
-| **Cursor** | `cursor-agent` | Cursor Pro |
 | **Copilot** | `copilot` | GitHub Copilot |
+
+Every agent launches with that CLI's permission-bypass flag already applied, so a
+click drops you into a session that does not stop to ask:
+
+| CLI | Flag |
+|---|---|
+| `agy`, `claude` | `--dangerously-skip-permissions` |
+| `qwen`, `kimi` | `--yolo` |
+| `codex` | `--dangerously-bypass-approvals-and-sandbox` |
+| `cursor-agent` | `--force` |
+| `grok` | `--always-approve` |
+| `copilot` | `--allow-all-tools` |
 
 Adding or changing an agent is a single entry in
 [`src/shared/agents.ts`](src/shared/agents.ts) — the buttons, presets, control API,

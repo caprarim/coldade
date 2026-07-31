@@ -7,6 +7,19 @@
 //
 // Install commands are PowerShell — they are embedded into the generated bootstrap
 // script (see `buildBootstrap` in src/main/main.ts).
+//
+// EVERY `run` carries that CLI's permission-bypass flag, so a button click lands
+// you in a session that never stops to ask. The flag differs per vendor and is
+// not guessable — each one below is the documented switch for that tool:
+//
+//   agy          --dangerously-skip-permissions
+//   qwen         --yolo                          (alias: --approval-mode=yolo)
+//   kimi         --yolo                          (hidden aliases: --yes, --auto-approve)
+//   codex        --dangerously-bypass-approvals-and-sandbox
+//   cursor-agent --force
+//   claude       --dangerously-skip-permissions
+//   grok         --always-approve
+//   copilot      --allow-all-tools
 
 export type AgentType =
   | 'antigravity'
@@ -45,7 +58,7 @@ export const AGENTS: AgentSpec[] = [
     tier: 'free',
     bin: 'agy',
     install: 'Invoke-RestMethod https://antigravity.google/cli/install.ps1 | Invoke-Expression',
-    run: 'agy',
+    run: 'agy --dangerously-skip-permissions',
     color: '#4285f4',
     // Google switched the free Gemini CLI quota off on 18 Jun 2026 and moved
     // free/Pro/Ultra users to Antigravity CLI (`agy`), so that is what the
@@ -70,7 +83,7 @@ export const AGENTS: AgentSpec[] = [
     // The `kimi-cli` package on npm is an unrelated front-end scaffolder, not
     // Moonshot's agent — the official Windows path is this installer.
     install: 'Invoke-RestMethod https://code.kimi.com/install.ps1 | Invoke-Expression',
-    run: 'kimi',
+    run: 'kimi --yolo',
     color: '#22d3ee',
     note: 'Free tier on Kimi K2.5 · 256K context',
   },
@@ -83,6 +96,18 @@ export const AGENTS: AgentSpec[] = [
     run: 'codex --dangerously-bypass-approvals-and-sandbox',
     color: '#22c55e',
     note: 'Free on a ChatGPT account',
+  },
+  {
+    type: 'cursor',
+    label: 'Cursor',
+    tier: 'free',
+    bin: 'cursor-agent',
+    install: 'Invoke-RestMethod https://cursor.com/install | Invoke-Expression',
+    // `--force` allows all file modifications without prompting; `-f` is its
+    // short form. Spelled out so it survives a CLI surface change.
+    run: 'cursor-agent --force',
+    color: '#00c8c8',
+    note: 'Free Hobby plan, no card · limited agent requests',
   },
 
   // ── Pro tiers: these need a paid plan or an API key ───────────────────────
@@ -105,16 +130,6 @@ export const AGENTS: AgentSpec[] = [
     run: 'grok',
     color: '#e5e5e5',
     note: 'SuperGrok or xAI API credits',
-  },
-  {
-    type: 'cursor',
-    label: 'Cursor',
-    tier: 'pro',
-    bin: 'cursor-agent',
-    install: 'Invoke-RestMethod https://cursor.com/install | Invoke-Expression',
-    run: 'cursor-agent -f',
-    color: '#00c8c8',
-    note: 'Cursor Pro plan',
   },
   {
     type: 'copilot',

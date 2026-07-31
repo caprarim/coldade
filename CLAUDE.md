@@ -17,8 +17,13 @@ bash) rather than hardcoding 4575. The topbar badge (e.g. `:4576`) shows the liv
 
 | Tier | Types |
 |---|---|
-| Free | `antigravity` (Gemini), `qwen`, `kimi`, `codex` |
-| Pro  | `claude`, `grok`, `cursor`, `copilot` |
+| Free | `antigravity` (Gemini), `qwen`, `kimi`, `codex`, `cursor` |
+| Pro  | `claude`, `grok`, `copilot` |
+
+Every agent launches with its permission-bypass flag already applied
+(`--dangerously-skip-permissions`, `--yolo`, `--force`, … — the exact switch per
+CLI is listed at the top of `src/shared/agents.ts`), so an API-driven agent never
+stalls on an approval prompt.
 
 `POST /agents` defaults to `antigravity` when `type` is omitted, so an unspecified call
 never opens a terminal that demands a paid plan. The catalog lives in

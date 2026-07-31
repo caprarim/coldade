@@ -147,7 +147,7 @@ export function startControlServer(
       if (method === 'GET' && parts.length === 0) {
         return sendJson(res, 200, {
           name: 'ColdADE Control API',
-          agentTypes: { free: ['antigravity', 'qwen', 'kimi', 'codex'], pro: ['claude', 'grok', 'cursor', 'copilot'] },
+          agentTypes: { free: ['antigravity', 'qwen', 'kimi', 'codex', 'cursor'], pro: ['claude', 'grok', 'copilot'] },
           endpoints: {
             'GET /agents': 'List all agent terminals',
             'POST /agents': `Add an agent. Body: { "type": "${VALID_TYPES.join('" | "')}" }. Defaults to "${DEFAULT_TYPE}".`,
