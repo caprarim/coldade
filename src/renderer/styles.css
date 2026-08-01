@@ -162,6 +162,11 @@ button { background: none; border: none; cursor: pointer; }
   color: hsl(var(--foreground));
 }
 .btn-outline:hover:not(:disabled) { background: hsl(var(--accent)); }
+.btn-outline.is-active {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  border-color: hsl(var(--ring) / .5);
+}
 
 .btn-ghost {
   background: transparent;

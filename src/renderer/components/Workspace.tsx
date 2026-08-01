@@ -12,6 +12,7 @@ interface PresetItem { type: AgentType; count: number; }
 interface Preset { id: string; label: string; items: PresetItem[]; builtin?: boolean; }
 
 const PRESETS_KEY = 'coldade-presets-v1';
+const TILE_KEY = 'coldade-tile-mode-v1';
 
 // Built-ins stay on the free tier so a fresh install can launch a whole team
 // without anyone needing a subscription.
@@ -49,10 +50,18 @@ function loadPresets(): Preset[] {
   return [...BUILTIN_PRESETS];
 }
 
+// A square-ish grid so every terminal stays on screen instead of wrapping off
+// the bottom: 4 agents land 2x2, 5 and 6 land 3x2, 9 land 3x3.
 function gridCols(count: number): number {
-  if (count <= 1) return 1;
-  if (count <= 2) return 2;
-  return 3;
+  return Math.max(1, Math.ceil(Math.sqrt(count)));
+}
+
+function loadTileMode(): boolean {
+  try {
+    return localStorage.getItem(TILE_KEY) !== '0';
+  } catch (_e) {
+    return true;
+  }
 }
 
 const MIN_PANEL_W = 300;
@@ -115,6 +124,7 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
   const [apiPort, setApiPort] = useState(4575);
   const [addOpen, setAddOpen] = useState(false);
   const [panelSizes, setPanelSizes] = useState<Record<string, { width: number; height: number }>>({});
+  const [tileMode, setTileMode] = useState<boolean>(loadTileMode);
   const [gridDims, setGridDims] = useState({ width: 0, height: 0 });
   const gridRef = useRef<HTMLDivElement>(null);
   const addRef = useRef<HTMLDivElement>(null);
@@ -206,6 +216,27 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
   const handlePanelResize = useCallback((id: string, width: number, height: number) => {
     setPanelSizes((prev) => ({ ...prev, [id]: { width, height } }));
   }, []);
+
+  // Tiling. A panel with no entry in panelSizes falls back to the even grid
+  // cell computed from the live container size, so dropping every manual size
+  // is all it takes to snap the whole workspace back into an even grid, and
+  // the grid then follows window resizes on its own.
+  const tileAgents = useCallback(() => {
+    setPanelSizes((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TILE_KEY, tileMode ? '1' : '0');
+    } catch (_e) {}
+  }, [tileMode]);
+
+  // With tile mode on, every launch or close re-flows the workspace, so agents
+  // are arranged the moment they appear rather than stacking at a stale size.
+  useEffect(() => {
+    if (!tileMode) return;
+    tileAgents();
+  }, [tileMode, agents.length, tileAgents]);
 
   const hasAgents = agents.length > 0;
   useEffect(() => {
@@ -454,11 +485,13 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
 
   const cols = gridCols(agents.length);
   const rows = Math.max(1, Math.ceil(agents.length / cols));
+  // Floored so cols panels plus their gaps can never total more than the
+  // container: a fractional pixel over and the last column wraps.
   const defaultTerminalW = gridDims.width > 0
-    ? Math.max(280, (gridDims.width - GRID_GAP * (cols - 1)) / cols)
+    ? Math.max(280, Math.floor((gridDims.width - GRID_GAP * (cols - 1)) / cols))
     : DEFAULT_TERMINAL_W;
   const defaultTerminalH = gridDims.height > 0
-    ? Math.max(160, (gridDims.height - GRID_GAP * (rows - 1)) / rows)
+    ? Math.max(160, Math.floor((gridDims.height - GRID_GAP * (rows - 1)) / rows))
     : DEFAULT_TERMINAL_H;
 
   const mainContent = agents.length === 0 ? (
@@ -664,6 +697,19 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
               </div>
             )}
           </div>
+
+          {hasAgents && (
+            <button
+              className={`btn btn-outline btn-sm${tileMode ? ' is-active' : ''}`}
+              title={tileMode
+                ? 'Tile mode is on, agents stay arranged in an even grid. Click to re-tile now, right-click to turn it off'
+                : 'Arrange every agent in an even grid and keep them arranged'}
+              onClick={() => (tileMode ? tileAgents() : setTileMode(true))}
+              onContextMenu={(e) => { e.preventDefault(); setTileMode(false); }}
+            >
+              Tile
+            </button>
+          )}
 
           <button
             className="btn btn-outline btn-sm"

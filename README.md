@@ -71,6 +71,9 @@ panel colours and install logic all read from that one list.
   visible without restarting, then launches the agent.
 - **Split terminals.** Real PTYs via `node-pty` + xterm.js. Drag to resize, double-click
   a title to rename, or go full-screen (`Esc` to exit).
+- **Tiling.** Agents land in an even, square-ish grid the moment they launch, and stay
+  arranged as you add or close them. `Tile` in the top bar re-tiles on demand after you
+  have dragged panels around; right-click it to stop the automatic re-tiling.
 - **Workspaces.** Each one is isolated, with its own Claude config directory, so
   switching accounts in one does not disturb another.
 - **Auto-naming.** Tabs rename themselves from what you ask the agent to do — an instant
