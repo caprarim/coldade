@@ -114,6 +114,25 @@ app.on('will-quit', () => {
   if (instanceLockFile) { try { fs.unlinkSync(instanceLockFile); } catch (_e) {} }
 });
 
+// A crashed GPU process leaves Chromium compositing nothing: the window turns
+// black while the renderer keeps running happily, which reads to a user as
+// "the app is broken". Chromium does not recover from this on its own, so
+// remember the crash and come back on the software renderer — plenty fast for
+// terminals. The flag lives in userData, so it is per-instance and survives
+// restarts on a machine whose drivers are the actual problem.
+const gpuFallbackFlag = path.join(app.getPath('userData'), 'gpu-fallback');
+const gpuAlreadyFellBack = fs.existsSync(gpuFallbackFlag);
+if (gpuAlreadyFellBack) app.disableHardwareAcceleration();
+
+app.on('child-process-gone', (_event, details) => {
+  if (details.type !== 'GPU' || details.reason === 'clean-exit') return;
+  // Already software-rendering: relaunching again would just loop.
+  if (gpuAlreadyFellBack) return;
+  try { fs.writeFileSync(gpuFallbackFlag, new Date().toISOString(), 'utf-8'); } catch (_e) {}
+  app.relaunch();
+  app.exit(0);
+});
+
 app.whenReady().then(() => {
   createWindow();
   accounts.startWatching();

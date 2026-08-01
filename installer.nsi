@@ -15,6 +15,7 @@ Unicode true
 !endif
 
 !define APPNAME    "ColdADE"
+!define ALIAS      "Agent Launcher (ColdADE)"
 !define COMPANY    "caprarim"
 !define SOURCEDIR  "release\win-unpacked"
 !define UNINSTKEY  "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
@@ -61,6 +62,11 @@ Section "Install"
   CreateShortCut "$SMPROGRAMS\${APPNAME}.lnk" "$INSTDIR\${APPNAME}.exe" "" "$INSTDIR\${APPNAME}.exe" 0
   CreateShortCut "$DESKTOP\${APPNAME}.lnk"    "$INSTDIR\${APPNAME}.exe" "" "$INSTDIR\${APPNAME}.exe" 0
 
+  ; Start Menu search matches on the shortcut's file name, so "ColdADE" alone is
+  ; invisible to anyone who still types the old name. This second shortcut points
+  ; at the same exe and makes "agent launcher" find it too.
+  CreateShortCut "$SMPROGRAMS\${ALIAS}.lnk" "$INSTDIR\${APPNAME}.exe" "" "$INSTDIR\${APPNAME}.exe" 0
+
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKCU "Software\${APPNAME}" "InstallDir" "$INSTDIR"
 
@@ -83,6 +89,7 @@ Section "Uninstall"
   Pop $0
 
   Delete "$SMPROGRAMS\${APPNAME}.lnk"
+  Delete "$SMPROGRAMS\${ALIAS}.lnk"
   Delete "$DESKTOP\${APPNAME}.lnk"
 
   RMDir /r "$INSTDIR"
