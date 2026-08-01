@@ -107,6 +107,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getControlPort: (): Promise<number> =>
     ipcRenderer.invoke('control:port'),
 
+  openExternal: (url: string): Promise<void> =>
+    ipcRenderer.invoke('open-external', url),
+
   // Agent tab naming
   nameAgentPrompt: (prompt: string): Promise<string | null> =>
     ipcRenderer.invoke('ai:name-agent', prompt),

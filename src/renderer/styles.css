@@ -1,13 +1,41 @@
 /* ColdADE — design system
  *
  * shadcn/ui's token model (zinc, dark) implemented in plain CSS. Same HSL
- * variables, same --radius scale, same button/badge/card/input recipes — but
+ * variables, same --radius scale, same button/card/input recipes — but
  * without pulling Tailwind into the Electron + webpack build, which would have
  * meant rewriting the whole pipeline for no visual gain.
  *
  * Every colour below is `hsl(var(--token))`. To reskin the app, change the
  * tokens in :root and nothing else.
+ *
+ * No pill-shaped chips anywhere: labels are plain text and every interactive
+ * chip uses the same --radius family as the buttons. `border-radius: 999px` is
+ * reserved for things that are genuinely circles (status dots).
  */
+
+/* Inter, variable, subset to latin — bundled rather than fetched, because the
+ * renderer runs from file:// with no network guarantee. webpack inlines these
+ * as data URIs (see the asset/inline rule), so they survive asar packaging. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('./fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('./fonts/inter-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 :root {
   --background: 240 10% 3.9%;
@@ -43,8 +71,11 @@
 
   --radius: 0.5rem;
 
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  --font-sans: 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  /* Cascadia Mono ships with Windows Terminal and is the better default of the
+   * pair (Code adds ligatures that misalign TUI box-drawing). Consolas is the
+   * floor: it is on every Windows install. */
+  --font-mono: 'Cascadia Mono', 'Cascadia Code', 'JetBrains Mono', Consolas, ui-monospace, monospace;
 
   /* Compact metrics — the whole point of the rework. */
   --topbar-h: 44px;
@@ -65,10 +96,22 @@ body {
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
+  /* Inter's defaults look dated next to its alternates: cv02/cv03/cv04 give the
+   * open-tailed g, single-storey l and squared numerals, ss03 the curved r.
+   * calt keeps contextual alternates on. This is the difference between "a
+   * webfont" and the current-decade look. */
+  font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'ss03' 1, 'calt' 1;
+  font-variant-ligatures: contextual;
+  font-optical-sizing: auto;
+  letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* Numbers that sit in columns or update in place (ports, counts, sizes) must
+ * not jitter. */
+input[type='number'], .builder-count { font-variant-numeric: tabular-nums; }
 
 button, input, select, textarea { font: inherit; color: inherit; }
 button { background: none; border: none; cursor: pointer; }
@@ -133,38 +176,6 @@ button { background: none; border: none; cursor: pointer; }
   color: hsl(var(--accent-foreground));
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 1px 8px;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .02em;
-  line-height: 1.6;
-  border: 1px solid transparent;
-  white-space: nowrap;
-}
-.badge-free {
-  background: hsl(var(--success) / .14);
-  color: hsl(var(--success));
-  border-color: hsl(var(--success) / .25);
-}
-.badge-pro {
-  background: hsl(var(--warning) / .14);
-  color: hsl(var(--warning));
-  border-color: hsl(var(--warning) / .28);
-}
-.badge-api {
-  background: hsl(var(--secondary));
-  color: hsl(var(--muted-foreground));
-  border-color: hsl(var(--border));
-  font-family: var(--font-mono);
-  cursor: pointer;
-  user-select: none;
-}
-.badge-api:hover { color: hsl(var(--foreground)); }
-
 .input {
   height: 26px;
   width: 100%;
@@ -209,13 +220,20 @@ select.input { cursor: pointer; }
   padding: 0 8px 0 12px;
   border-bottom: 1px solid hsl(var(--border));
 }
-.sidebar-title {
+/* One recipe for every small section label in the app, so "WORKSPACES",
+ * "FREE" and "QUICK LAUNCH" cannot drift apart. */
+.sidebar-title,
+.popover-title,
+.tier-name,
+.presets-title,
+.editor-title {
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .07em;
+  font-weight: 650;
+  letter-spacing: .085em;
   text-transform: uppercase;
   color: hsl(var(--muted-foreground));
 }
+
 .sidebar-add {
   width: 22px; height: 22px;
   display: grid; place-items: center;
@@ -286,12 +304,13 @@ select.input { cursor: pointer; }
 .topbar-left { display: flex; align-items: center; gap: 8px; flex: none; }
 .app-title {
   font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -.01em;
-  max-width: 180px;
+  font-weight: 620;
+  letter-spacing: -.017em;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: default;
 }
 
 .topbar-center { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
@@ -361,13 +380,6 @@ select.input { cursor: pointer; }
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px 4px;
-}
-.popover-title {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
 }
 .popover .separator { margin: 4px 0; }
 
@@ -463,13 +475,12 @@ select.input { cursor: pointer; }
 }
 
 .tier { display: flex; flex-direction: column; gap: 9px; }
-.tier-head { display: flex; align-items: center; gap: 8px; }
-.tier-name {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
+.tier-head { display: flex; align-items: baseline; gap: 8px; }
+/* Replaces the old green/amber pills. Same information, no chrome. */
+.tier-hint {
+  font-size: 11.5px;
+  color: hsl(var(--muted-foreground) / .8);
+  letter-spacing: 0;
 }
 .tier-grid {
   display: grid;
@@ -480,20 +491,13 @@ select.input { cursor: pointer; }
 /* ── Presets ───────────────────────────────────────────────────────────── */
 .presets-section { display: flex; flex-direction: column; gap: 9px; }
 .presets-head { display: flex; align-items: center; justify-content: space-between; }
-.presets-title {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
-}
 
 .preset-grid { display: flex; flex-wrap: wrap; gap: 5px; }
 
 .preset-chip {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: calc(var(--radius) - 2px);
   border: 1px solid hsl(var(--border));
   background: hsl(var(--secondary) / .5);
   overflow: hidden;
@@ -501,13 +505,13 @@ select.input { cursor: pointer; }
 }
 .preset-chip:hover { border-color: hsl(var(--ring) / .4); background: hsl(var(--secondary)); }
 .preset-launch {
-  padding: 3px 11px;
+  padding: 4px 10px;
   font-size: 11.5px;
   font-weight: 500;
   color: hsl(var(--foreground));
 }
 .preset-delete {
-  padding: 3px 8px 3px 2px;
+  padding: 4px 8px 4px 2px;
   font-size: 13px;
   line-height: 1;
   color: hsl(var(--muted-foreground));
@@ -611,6 +615,23 @@ select.input { cursor: pointer; }
 .panel-fullscreen svg { width: 12px; height: 12px; }
 .panel-fullscreen:hover { background: hsl(var(--accent)); color: hsl(var(--foreground)); }
 
+.panel-guide-toggle {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 5px;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  flex: none;
+}
+.panel-guide-toggle:hover { background: hsl(var(--accent)); color: hsl(var(--foreground)); }
+.panel-guide-toggle.is-active {
+  color: var(--accent, hsl(var(--foreground)));
+  border-color: color-mix(in srgb, var(--accent) 50%, hsl(var(--border)));
+}
+
 .panel-close {
   padding: 2px 7px;
   border-radius: 4px;
@@ -619,6 +640,83 @@ select.input { cursor: pointer; }
   flex: none;
 }
 .panel-close:hover { background: hsl(var(--destructive) / .16); color: hsl(var(--destructive)); }
+
+/* ── Per-agent usage guide ─────────────────────────────────────────────────
+ * Overlays the terminal rather than sitting above it in the flex column: a
+ * sibling would change the PTY's row count every time the card opens or
+ * closes, and a running TUI redraws badly when it is resized under it. */
+.panel-guide {
+  position: absolute;
+  top: 28px;            /* below .panel-header */
+  left: 0;
+  right: 0;
+  z-index: 8;
+  max-height: calc(100% - 40px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 12px 12px;
+  background: hsl(var(--popover) / .97);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, hsl(var(--border)));
+  box-shadow: 0 10px 24px -12px rgb(0 0 0 / .9);
+  animation: guide-in .14s ease-out;
+}
+@keyframes guide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.panel-guide-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.panel-guide-title {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .085em;
+  text-transform: uppercase;
+  color: var(--accent, hsl(var(--muted-foreground)));
+}
+.panel-guide-close {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 5px;
+  font-size: 14px;
+  line-height: 1;
+  color: hsl(var(--muted-foreground));
+}
+.panel-guide-close:hover { background: hsl(var(--accent-foreground) / .1); color: hsl(var(--foreground)); }
+
+.panel-guide-headline {
+  font-size: 12.5px;
+  font-weight: 550;
+  letter-spacing: -.012em;
+  line-height: 1.45;
+}
+.panel-guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 17px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+.panel-guide-steps li::marker { color: var(--accent, hsl(var(--muted-foreground))); font-variant-numeric: tabular-nums; }
+.panel-guide-caveat {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: hsl(var(--warning) / .95);
+  border-left: 2px solid hsl(var(--warning) / .5);
+  padding-left: 8px;
+}
+.panel-guide-link {
+  align-self: flex-start;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--accent, hsl(var(--foreground)));
+  padding: 3px 0;
+}
+.panel-guide-link:hover { text-decoration: underline; }
 
 .panel-terminal { flex: 1; min-height: 0; overflow: hidden; padding: 4px 0 0 6px; }
 .panel-terminal .xterm { height: 100%; }
@@ -722,7 +820,7 @@ select.input { cursor: pointer; }
 }
 .browser-preset-btn {
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: calc(var(--radius) - 3px);
   border: 1px solid hsl(var(--border));
   font-size: 11px;
   color: hsl(var(--muted-foreground));
@@ -733,7 +831,7 @@ select.input { cursor: pointer; }
   color: hsl(var(--primary-foreground));
   border-color: transparent;
 }
-.browser-preset-clear { margin-left: auto; font-size: 11px; color: hsl(var(--muted-foreground)); padding: 3px 8px; border-radius: 999px; }
+.browser-preset-clear { margin-left: auto; font-size: 11px; color: hsl(var(--muted-foreground)); padding: 3px 8px; border-radius: calc(var(--radius) - 3px); }
 .browser-preset-clear:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
 
 .browser-viewport { flex: 1; min-height: 0; position: relative; display: flex; }
@@ -764,7 +862,7 @@ select.input { cursor: pointer; }
   z-index: 3;
 }
 .browser-dim-badge {
-  border-radius: 999px;
+  border-radius: calc(var(--radius) - 3px);
   border: 1px solid hsl(var(--border));
   background: hsl(var(--popover) / .92);
   padding: 2px 9px;
@@ -787,13 +885,6 @@ select.input { cursor: pointer; }
   height: 30px;
   padding: 0 8px;
   border-bottom: 1px solid hsl(var(--border));
-}
-.editor-title {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
 }
 .editor-filename {
   flex: 1;

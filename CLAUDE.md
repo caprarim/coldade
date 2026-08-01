@@ -11,7 +11,8 @@ Multiple instances can run side by side: the first binds 4575 and each extra one
 the next free port (4576, 4577, ...). Every terminal's environment carries
 `AGENT_LAUNCHER_PORT` set to ITS instance's actual port — so from inside a terminal
 always use `http://127.0.0.1:$env:AGENT_LAUNCHER_PORT` (or `$AGENT_LAUNCHER_PORT` in
-bash) rather than hardcoding 4575. The topbar badge (e.g. `:4576`) shows the live port.
+bash) rather than hardcoding 4575. The port is no longer shown as a topbar badge;
+hover the workspace name to see it, or click the name to copy the base URL.
 
 ## Agent types
 
@@ -28,6 +29,14 @@ stalls on an approval prompt.
 `POST /agents` defaults to `antigravity` when `type` is omitted, so an unspecified call
 never opens a terminal that demands a paid plan. The catalog lives in
 `src/shared/agents.ts` — add an entry there and it appears everywhere automatically.
+
+Each catalog entry also carries a `guide` (headline, steps, sign-up URL, caveat) that
+the terminal panel shows on launch — the "how do I run this one for free" card, closed
+with `×` and reopened with the `?` in the panel header. An entry may add a `recover`
+`{ pattern, hint }`: when the terminal prints something matching `pattern`, the panel
+writes `hint` into the scrollback and reopens the guide. Kimi uses this, because its
+OAuth login is rejected with a membership error when no Kimi Code plan has been claimed
+on the account — the CLI installs and starts fine, so the error is the first sign.
 
 Opening a terminal also **installs that CLI if it is missing** (see
 "Install bootstrap" below), so the first call for a given type can take a minute.

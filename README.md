@@ -23,13 +23,19 @@ Every button installs its CLI on first use and caches it forever after.
 |---|---|---|
 | **Gemini** | `agy` | Google's Antigravity CLI. Free with a Google account, weekly compute cap. |
 | **Qwen** | `qwen` | 2,000 requests/day, no token limit, via a qwen.ai login. |
-| **Kimi** | `kimi` | Moonshot's Kimi K2.5, 256K context. |
+| **Kimi** | `kimi` | Moonshot's Kimi K2.5, 256K context. Claim the free Kimi Code plan first (see below). |
 | **Codex** | `codex` | OpenAI's CLI, free on a ChatGPT account. |
 | **Cursor** | `cursor-agent` | Free Hobby plan, no card. Agent requests are limited. |
 
 > Google switched off the free Gemini CLI quota on 18 June 2026 and moved free, Pro and
 > Ultra users to **Antigravity CLI** (`agy`). That is what the Gemini button installs —
 > the old `gemini` binary now needs a paid API key.
+
+> **Kimi:** the free plan has to be claimed on your account at
+> [kimi.com/code](https://www.kimi.com/code) *before* the first `/login`. Without it the
+> CLI installs and starts normally and then the login fails with *"We're unable to verify
+> your membership benefits at this time."* ColdADE detects that message and prints the fix
+> in the terminal.
 
 ### Pro tiers — paid plan or API key
 
@@ -57,6 +63,9 @@ panel colours and install logic all read from that one list.
 
 ## Features
 
+- **A usage guide per agent.** Every terminal opens with a short card: how to log in to
+  that CLI for free, what the quota actually is, and the one thing people get wrong.
+  Dismiss it with `×`, bring it back with `?` in the panel header.
 - **One-click install.** A generated PowerShell bootstrap detects whether the CLI is
   present, installs it if not, refreshes `PATH` from the registry so the new binary is
   visible without restarting, then launches the agent.
@@ -90,7 +99,8 @@ Requires Node 20+. `node-pty` ships prebuilt N-API binaries for win32-x64, so th
 - Claude account profiles are read from `%APPDATA%\agent-terminals\claude-accounts`,
   shared with the older launcher so existing profiles keep working.
 - The control API binds loopback only. Extra instances take the next free port
-  (4576, 4577, …); the port badge in the top bar shows which one is live.
+  (4576, 4577, …); hover the workspace name in the top bar to see which one is live, or
+  click it to copy the base URL.
 
 ## License
 

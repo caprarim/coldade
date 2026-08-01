@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
@@ -542,6 +542,17 @@ ipcMain.handle('workspace:ensure-config', (_event, workspaceId: string): string 
   workspaceConfigDir(workspaceId));
 
 ipcMain.handle('control:port', (): number => controlPort);
+
+// Sign-up / activation links from the per-agent guide cards. Restricted to
+// http(s) so a malformed catalog entry can never hand the shell a file: or a
+// custom protocol to launch.
+ipcMain.handle('open-external', async (_event, url: string): Promise<void> => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
+    await shell.openExternal(parsed.toString());
+  } catch (_e) { /* not a URL — ignore */ }
+});
 
 // ── Agent tab naming ──────────────────────────────────────────────────────────
 // Used by the renderer, which watches keystrokes in xterm and already has the

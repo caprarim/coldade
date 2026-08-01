@@ -475,7 +475,7 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
         <div className="tier">
           <div className="tier-head">
             <span className="tier-name">Free</span>
-            <span className="badge badge-free">No card required</span>
+            <span className="tier-hint">no card required</span>
           </div>
           <div className="tier-grid">
             {FREE_AGENTS.map((spec) => (
@@ -487,7 +487,7 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
         <div className="tier">
           <div className="tier-head">
             <span className="tier-name">Paid</span>
-            <span className="badge badge-pro">Pro tiers</span>
+            <span className="tier-hint">subscription or API credits</span>
           </div>
           <div className="tier-grid">
             {PRO_AGENTS.map((spec) => (
@@ -602,20 +602,15 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
     <div className="app">
       <div className="topbar">
         <div className="topbar-left">
-          <span className="app-title">{workspace.name}</span>
+          {/* The control port used to sit here as a badge. It is still worth
+              knowing — every terminal gets it as AGENT_LAUNCHER_PORT, and the
+              docs reference it — so it moved into the title's tooltip rather
+              than taking up room on screen. */}
           <span
-            className="badge badge-api"
-            title="Control API is live — click to copy the URL"
-            onClick={(e) => {
-              navigator.clipboard.writeText(`http://127.0.0.1:${apiPort}`);
-              const el = e.currentTarget;
-              const old = el.textContent;
-              el.textContent = 'Copied';
-              setTimeout(() => { el.textContent = old; }, 1500);
-            }}
-          >
-            :{apiPort}
-          </span>
+            className="app-title"
+            title={`${workspace.name} · control API on http://127.0.0.1:${apiPort} (click to copy)`}
+            onClick={() => { navigator.clipboard.writeText(`http://127.0.0.1:${apiPort}`); }}
+          >{workspace.name}</span>
         </div>
 
         <div className="topbar-center">
@@ -655,7 +650,6 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
               <div className="popover">
                 <div className="popover-head">
                   <span className="popover-title">Free</span>
-                  <span className="badge badge-free">No card</span>
                 </div>
                 {FREE_AGENTS.map((spec) => (
                   <AgentButton key={spec.type} spec={spec} size="row" onClick={() => spawn(spec.type)} />
@@ -663,7 +657,6 @@ export default function Workspace({ workspace, active, onAgentsChange, registerA
                 <div className="separator" />
                 <div className="popover-head">
                   <span className="popover-title">Paid</span>
-                  <span className="badge badge-pro">Pro tiers</span>
                 </div>
                 {PRO_AGENTS.map((spec) => (
                   <AgentButton key={spec.type} spec={spec} size="row" onClick={() => spawn(spec.type)} />

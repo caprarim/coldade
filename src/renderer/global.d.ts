@@ -25,6 +25,7 @@ declare global {
       onAccountSwitched: (cb: (res: { ok: boolean; email?: string; error?: string; reason: string; workspaceId?: string }) => void) => () => void;
       ensureWorkspaceConfig: (workspaceId: string) => Promise<string>;
       getControlPort: () => Promise<number>;
+      openExternal: (url: string) => Promise<void>;
       nameAgentPrompt: (prompt: string) => Promise<string | null>;
       onAgentRename: (cb: (id: string, name: string) => void) => () => void;
       winBuildNumber: number;

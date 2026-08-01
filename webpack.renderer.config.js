@@ -16,6 +16,13 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
+      {
+        // Inlined as data URIs rather than emitted as files: the renderer is
+        // loaded from file:// inside an asar, where a relative font URL from an
+        // injected <style> tag does not resolve.
+        test: /\.woff2?$/,
+        type: 'asset/inline',
+      },
     ],
   },
   resolve: {

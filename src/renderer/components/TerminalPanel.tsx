@@ -67,6 +67,11 @@ export default function TerminalPanel({
   const [status, setStatus] = useState<'starting' | 'running' | 'exited' | 'error'>('starting');
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
+  // Every launch opens with the "how do I use this for free" card. Closing it
+  // is per-panel, so a second terminal of the same type still explains itself.
+  const [guideOpen, setGuideOpen] = useState(true);
+  const guideOpenRef = useRef(true);
+  guideOpenRef.current = guideOpen;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -173,8 +178,26 @@ export default function TerminalPanel({
       });
     });
 
+    // Known first-login failure for this CLI (Kimi's membership check, today).
+    // The vendor's message says what broke but not what to do, so when it shows
+    // up we put the fix in the scrollback and re-open the guide. Matched once
+    // per panel — a retry loop must not spam the terminal.
+    const recover = getAgent(agent.type)?.recover;
+    const recoverRe = recover ? new RegExp(recover.pattern, 'i') : null;
+    let recovered = false;
+    let recentOutput = '';
+
     const unsubData = window.electronAPI.onPtyData(agent.id, (data) => {
       term.write(data);
+      if (!recoverRe || recovered) return;
+      // Vendor errors arrive split across PTY chunks and wrapped mid-sentence,
+      // so match against a rolling window with the ANSI and line breaks removed.
+      recentOutput = (recentOutput + data).slice(-4000);
+      const flat = recentOutput.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\s+/g, ' ');
+      if (!recoverRe.test(flat)) return;
+      recovered = true;
+      term.writeln(`\r\n\x1b[36m${recover!.hint}\x1b[0m`);
+      if (!guideOpenRef.current) setGuideOpen(true);
     });
 
     const unsubExit = window.electronAPI.onPtyExit(agent.id, (code) => {
@@ -241,7 +264,9 @@ export default function TerminalPanel({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agent.id]);
 
-  const accentColor = getAgent(agent.type)?.color || '#888';
+  const spec = getAgent(agent.type);
+  const accentColor = spec?.color || '#888';
+  const guide = spec?.guide;
 
   const startEdit = () => { setDraft(agent.name); setEditing(true); };
   const commitEdit = () => {
@@ -305,6 +330,13 @@ export default function TerminalPanel({
           >{agent.name}</span>
         )}
         <span className={`panel-status status-${status}`} title={status} />
+        {guide && (
+          <button
+            className={`panel-guide-toggle${guideOpen ? ' is-active' : ''}`}
+            title={guideOpen ? 'Hide the usage guide' : `How to use ${spec?.label} for free`}
+            onClick={() => setGuideOpen((v) => !v)}
+          >?</button>
+        )}
         {onToggleFullscreen && (
           <button
             className="panel-fullscreen"
@@ -324,6 +356,31 @@ export default function TerminalPanel({
         )}
         <button className="panel-close" onClick={onClose}>Close</button>
       </div>
+      {guide && guideOpen && (
+        <div className="panel-guide">
+          <div className="panel-guide-head">
+            <span className="panel-guide-title">
+              {spec?.tier === 'free' ? 'Using it for free' : 'What this one costs'}
+            </span>
+            <button className="panel-guide-close" title="Dismiss" onClick={() => setGuideOpen(false)}>
+              &times;
+            </button>
+          </div>
+          <p className="panel-guide-headline">{guide.headline}</p>
+          <ol className="panel-guide-steps">
+            {guide.steps.map((step, i) => <li key={i}>{step}</li>)}
+          </ol>
+          {guide.caveat && <p className="panel-guide-caveat">{guide.caveat}</p>}
+          {guide.url && (
+            <button
+              className="panel-guide-link"
+              onClick={() => window.electronAPI.openExternal(guide.url as string)}
+            >
+              {guide.url.replace(/^https?:\/\//, '')} ↗
+            </button>
+          )}
+        </div>
+      )}
       <div ref={containerRef} className="panel-terminal" />
       {!isFullscreen && onResize && (
         <>
